@@ -1,0 +1,137 @@
+[
+  {
+    "id": 1,
+    "schools": [
+      { "name": "Royal Green Elementary School", "distance": "0.4mi", "rating": "8/10", "type": "Public Elementary" },
+      { "name": "Howard D. Mcmillan Middle School", "distance": "0.4mi", "rating": "5/10", "type": "Public Middle" },
+      { "name": "G. Holmes Braddock Senior High School", "distance": "1.8mi", "rating": "5/10", "type": "Public High" }
+    ],
+    "hospitals": [
+      { "name": "Kendall Regional Medical Center", "distance": "2.1mi", "type": "General Hospital", "emergency": true },
+      { "name": "Baptist Hospital of Miami", "distance": "3.5mi", "type": "General Hospital", "emergency": true }
+    ],
+    "banks": [
+      { "name": "Bank of America", "distance": "0.8mi", "type": "Full Service Bank", "atm": true },
+      { "name": "Wells Fargo", "distance": "1.2mi", "type": "Full Service Bank", "atm": true },
+      { "name": "Chase Bank", "distance": "1.5mi", "type": "Full Service Bank", "atm": true }
+    ],
+    "restaurants": [
+      { "name": "Subway", "distance": "0.3mi", "type": "Fast Food", "cuisine": "Sandwiches" },
+      { "name": "McDonald's", "distance": "0.6mi", "type": "Fast Food", "cuisine": "American" },
+      { "name": "Pizza Hut", "distance": "0.9mi", "type": "Fast Food", "cuisine": "Italian" }
+    ],
+    "transportation": [
+      { "name": "Miami International Airport", "distance": "8.2mi", "type": "International Airport", "drive_time": "15 min" },
+      { "name": "Dadeland South Metrorail Station", "distance": "2.3mi", "type": "Metro Rail", "drive_time": "5 min" },
+      { "name": "South Miami Metrorail Station", "distance": "3.1mi", "type": "Metro Rail", "drive_time": "7 min" }
+    ]
+  },
+  {
+    "id": 2,
+    "schools": [
+      { "name": "Coral Gables Preparatory Academy", "distance": "0.6mi", "rating": "9/10", "type": "Private School" },
+      { "name": "George Washington Carver Middle School", "distance": "1.2mi", "rating": "7/10", "type": "Public Middle" },
+      { "name": "Coral Gables Senior High School", "distance": "1.8mi", "rating": "8/10", "type": "Public High" }
+    ],
+    "hospitals": [
+      { "name": "University of Miami Hospital", "distance": "1.8mi", "type": "Academic Medical Center", "emergency": true },
+      { "name": "Mercy Hospital", "distance": "2.4mi", "type": "General Hospital", "emergency": true }
+    ],
+    "banks": [
+      { "name": "Citibank", "distance": "0.5mi", "type": "Full Service Bank", "atm": true },
+      { "name": "SunTrust Bank", "distance": "1.1mi", "type": "Full Service Bank", "atm": true },
+      { "name": "Regions Bank", "distance": "1.7mi", "type": "Full Service Bank", "atm": true }
+    ],
+    "restaurants": [
+      { "name": "Olive Garden", "distance": "0.4mi", "type": "Casual Dining", "cuisine": "Italian" },
+      { "name": "Chipotle Mexican Grill", "distance": "0.7mi", "type": "Fast Casual", "cuisine": "Mexican" },
+      { "name": "Panera Bread", "distance": "1.0mi", "type": "Fast Casual", "cuisine": "American" }
+    ],
+    "transportation": [
+      { "name": "Miami International Airport", "distance": "6.8mi", "type": "International Airport", "drive_time": "12 min" },
+      { "name": "Douglas Road Metrorail Station", "distance": "1.8mi", "type": "Metro Rail", "drive_time": "4 min" },
+      { "name": "University Metrorail Station", "distance": "2.2mi", "type": "Metro Rail", "drive_time": "5 min" }
+    ]
+  },
+  {
+    "id": 3,
+    "schools": [
+      { "name": "Brickell International Academy", "distance": "0.3mi", "rating": "9/10", "type": "Private School" },
+      { "name": "Miami Arts Charter School", "distance": "1.1mi", "rating": "8/10", "type": "Charter School" },
+      { "name": "Miami Senior High School", "distance": "2.2mi", "rating": "7/10", "type": "Public High" }
+    ],
+    "hospitals": [
+      { "name": "Jackson Memorial Hospital", "distance": "1.5mi", "type": "Academic Medical Center", "emergency": true },
+      { "name": "Mount Sinai Medical Center", "distance": "2.8mi", "type": "General Hospital", "emergency": true }
+    ],
+    "banks": [
+      { "name": "JPMorgan Chase", "distance": "0.2mi", "type": "Full Service Bank", "atm": true },
+      { "name": "Bank of America", "distance": "0.6mi", "type": "Full Service Bank", "atm": true },
+      { "name": "Wells Fargo", "distance": "1.0mi", "type": "Full Service Bank", "atm": true }
+    ],
+    "restaurants": [
+      { "name": "Shake Shack", "distance": "0.1mi", "type": "Fast Casual", "cuisine": "American" },
+      { "name": "Sweetgreen", "distance": "0.4mi", "type": "Fast Casual", "cuisine": "Healthy" },
+      { "name": "Joe's Stone Crab", "distance": "0.8mi", "type": "Fine Dining", "cuisine": "Seafood" }
+    ],
+    "transportation": [
+      { "name": "Miami International Airport", "distance": "5.2mi", "type": "International Airport", "drive_time": "10 min" },
+      { "name": "Brickell Metrorail Station", "distance": "0.3mi", "type": "Metro Rail", "drive_time": "1 min" },
+      { "name": "Vizcaya Metrorail Station", "distance": "1.2mi", "type": "Metro Rail", "drive_time": "3 min" }
+    ]
+  },
+  {
+    "id": 4,
+    "schools": [
+      { "name": "Miami Beach Senior High School", "distance": "0.8mi", "rating": "8/10", "type": "Public High" },
+      { "name": "Nautilus Middle School", "distance": "1.2mi", "rating": "7/10", "type": "Public Middle" },
+      { "name": "North Beach Elementary", "distance": "1.5mi", "rating": "9/10", "type": "Public Elementary" }
+    ],
+    "hospitals": [
+      { "name": "Mount Sinai Medical Center", "distance": "1.8mi", "type": "General Hospital", "emergency": true },
+      { "name": "Miami Beach Community Health Center", "distance": "2.1mi", "type": "Community Health", "emergency": false }
+    ],
+    "banks": [
+      { "name": "SunTrust Bank", "distance": "0.4mi", "type": "Full Service Bank", "atm": true },
+      { "name": "Regions Bank", "distance": "0.9mi", "type": "Full Service Bank", "atm": true },
+      { "name": "Citibank", "distance": "1.3mi", "type": "Full Service Bank", "atm": true }
+    ],
+    "restaurants": [
+      { "name": "Nobu Miami", "distance": "0.2mi", "type": "Fine Dining", "cuisine": "Japanese" },
+      { "name": "Joe's Stone Crab", "distance": "0.6mi", "type": "Fine Dining", "cuisine": "Seafood" },
+      { "name": "Big Pink", "distance": "1.0mi", "type": "Casual Dining", "cuisine": "American" }
+    ],
+    "transportation": [
+      { "name": "Miami International Airport", "distance": "7.5mi", "type": "International Airport", "drive_time": "15 min" },
+      { "name": "Miami Beach Metrobus Station", "distance": "0.3mi", "type": "Bus Station", "drive_time": "1 min" },
+      { "name": "South Beach Trolley", "distance": "0.1mi", "type": "Trolley", "drive_time": "1 min" }
+    ]
+  },
+  {
+    "id": 5,
+    "schools": [
+      { "name": "Ransom Everglades School", "distance": "0.5mi", "rating": "10/10", "type": "Private School" },
+      { "name": "Carrollton School of the Sacred Heart", "distance": "1.1mi", "rating": "9/10", "type": "Private School" },
+      { "name": "Coral Gables Senior High School", "distance": "1.8mi", "rating": "8/10", "type": "Public High" }
+    ],
+    "hospitals": [
+      { "name": "University of Miami Hospital", "distance": "1.2mi", "type": "Academic Medical Center", "emergency": true },
+      { "name": "Mercy Hospital", "distance": "2.0mi", "type": "General Hospital", "emergency": true }
+    ],
+    "banks": [
+      { "name": "Bank of America", "distance": "0.3mi", "type": "Full Service Bank", "atm": true },
+      { "name": "Wells Fargo", "distance": "0.7mi", "type": "Full Service Bank", "atm": true },
+      { "name": "Chase Bank", "distance": "1.2mi", "type": "Full Service Bank", "atm": true }
+    ],
+    "restaurants": [
+      { "name": "Versailles Restaurant", "distance": "0.2mi", "type": "Casual Dining", "cuisine": "Cuban" },
+      { "name": "Cafe La Trova", "distance": "0.6mi", "type": "Casual Dining", "cuisine": "Cuban" },
+      { "name": "Ortanique on the Mile", "distance": "1.0mi", "type": "Fine Dining", "cuisine": "Caribbean" }
+    ],
+    "transportation": [
+      { "name": "Miami International Airport", "distance": "6.2mi", "type": "International Airport", "drive_time": "12 min" },
+      { "name": "Douglas Road Metrorail Station", "distance": "1.5mi", "type": "Metro Rail", "drive_time": "4 min" },
+      { "name": "University Metrorail Station", "distance": "2.1mi", "type": "Metro Rail", "drive_time": "5 min" }
+    ]
+  }
+] 

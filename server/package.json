@@ -1,0 +1,26 @@
+{
+  "name": "real-estate-chatbot",
+  "version": "1.0.0",
+  "description": "Real Estate Chatbot Backend with MongoDB",
+  "main": "server.js",
+  "scripts": {
+    "server": "node server.js",
+    "client": "cd ../client && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "start": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "mongodb": "^6.17.0",
+    "mongoose": "^7.8.7",
+    "openai": "^5.9.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

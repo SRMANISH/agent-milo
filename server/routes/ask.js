@@ -1,0 +1,233 @@
+const express = require('express')
+const router = express.Router()
+const { OpenAI } = require('openai');
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+const fs = require('fs');
+const path = require('path');
+
+router.post('/', async (req, res) => {
+  const { prompt, history, propertyContext } = req.body
+
+  // Load all properties for context
+  let allProperties = [];
+  try {
+    const basics = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/property_basics.json')));
+    const characteristics = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/property_characteristics.json')));
+    const images = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/property_images.json')));
+    
+    allProperties = basics.map(base => {
+      const char = characteristics.find(c => c.id === base.id) || {}
+      const img = images.find(i => i.id === base.id) || {}
+      return { ...base, ...char, image_url: img.image_url || "" }
+    });
+  } catch (error) {
+    console.error('Error loading properties:', error)
+    allProperties = []
+  }
+
+  // Format chat history for context
+  let historyText = '';
+  if (Array.isArray(history) && history.length > 0) {
+    const lastHistory = history.slice(-10);
+    historyText = lastHistory.map(m => `${m.from === 'user' ? 'User' : 'Bot'}: ${m.text}`).join('\n');
+  }
+
+  // Create system message based on context
+  let systemMessage = `You are a helpful real estate assistant. Here is a list of all available properties: ${JSON.stringify(allProperties)}.\nHere is the recent chat history:\n${historyText}`;
+  
+  // If we have property context, focus on that specific property
+  if (propertyContext) {
+    systemMessage = `You are a helpful real estate assistant. You are currently helping a user with questions about this specific property: ${JSON.stringify(propertyContext)}.\nHere is the recent chat history:\n${historyText}\n\nIMPORTANT GUIDELINES:
+1. Be POSITIVE and ENTHUSIASTIC when:
+   - User asks about THIS specific property features, amenities, utilities, or services
+   - User asks about property details
+2. For utilities/services: Always say "100% guaranteed" or "definitely available" - be very positive
+3. When user says they don't like the property: First try to convince them why this property is excellent, then suggest alternatives
+4. Keep responses CRISP and CLEAR (2-3 sentences max)
+5. If user asks about OTHER properties: Just respond briefly and let the system show property cards
+6. Always match properties by location priority when suggesting others
+7. Be conversational and helpful, not overly pushy
+8. IMPORTANT: When user asks for other properties, respond with just a brief message like "Here are some other great options for you:"`;
+  } else {
+    systemMessage += `\nFor every user query, reply conversationally to help them find a property, and also extract/infer from query location, bedrooms, and budget if mentioned. Always respond with a JSON object: { "message": "<your conversational reply>", "filters": { "location": "", "bedrooms": "", "budget": "" } }. Your values for the fields in filters should be based on the data provided and if multiple, make it comma separated. If a filter is not mentioned, leave it as an empty string.
+
+IMPORTANT: When users say they don't like a property or express concerns, be positive and convincing like a real estate agent. Highlight the property's value, location benefits, and investment potential. Keep responses crisp and enthusiastic.`;
+  }
+
+  // Check if user is asking about other properties or expressing dislike
+  const propertyKeywords = ['other property', 'different property', 'another property', 'similar property', 'more properties', 'show me properties', 'find properties', 'search properties', 'browse properties', 'view properties', 'show me alternatives', 'other options', 'show other properties', 'show properties', 'properties from', 'new york properties'];
+  const dislikeKeywords = ['don\'t like', 'not interested', 'not what i want', 'prefer something else', 'hate', 'dislike', 'not for me'];
+  
+  const isAskingForProperties = propertyKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
+  const isExpressingDislike = dislikeKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
+
+  try {
+    const gptResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: prompt }
+      ]
+    })
+
+    const reply = gptResponse.choices[0].message.content
+    let message = ''
+    let filters = { location: '', bedrooms: '', budget: '' }
+    let suggestedProperties = []
+    
+    // If we have property context, the response is just a message
+    if (propertyContext) {
+      message = reply
+      
+      // If user is asking for other properties or expressing dislike, suggest some
+      if (isAskingForProperties || isExpressingDislike) {
+        console.log('🎯 User is asking for properties or expressing dislike')
+        console.log('isAskingForProperties:', isAskingForProperties)
+        console.log('isExpressingDislike:', isExpressingDislike)
+        console.log('User prompt:', prompt)
+        console.log('Property keywords found:', propertyKeywords.filter(keyword => prompt.toLowerCase().includes(keyword)))
+        console.log('Dislike keywords found:', dislikeKeywords.filter(keyword => prompt.toLowerCase().includes(keyword)))
+        console.log('Current property ID:', propertyContext.id)
+        console.log('Current property location:', propertyContext.location)
+        console.log('Total available properties:', allProperties.length)
+        
+        // Filter out current property and suggest exactly 3 others, prioritizing same location
+        const currentLocation = propertyContext.location || ''
+        const sameLocationProps = allProperties
+          .filter(p => p.id !== propertyContext.id && p.location && p.location.toLowerCase().includes(currentLocation.toLowerCase()))
+          .slice(0, 3)
+        
+        console.log('🏠 Same location properties found:', sameLocationProps.length)
+        
+        let otherProps = []
+        if (sameLocationProps.length < 3) {
+          otherProps = allProperties
+            .filter(p => p.id !== propertyContext.id && (!p.location || !p.location.toLowerCase().includes(currentLocation.toLowerCase())))
+            .slice(0, 3 - sameLocationProps.length)
+        }
+        
+        console.log('🏠 Other location properties found:', otherProps.length)
+        
+        suggestedProperties = [...sameLocationProps, ...otherProps]
+          .slice(0, 3) // Ensure exactly 3 properties
+          .map(p => ({
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            location: p.location,
+            bedrooms: p.bedrooms,
+            bathrooms: p.bathrooms,
+            size_sqft: p.size_sqft,
+            image_url: p.image_url || ''
+          }))
+        
+        console.log('🎯 Final suggested properties:', suggestedProperties.map(p => ({ id: p.id, title: p.title, location: p.location })))
+      } else {
+        console.log('❌ Not suggesting properties - conditions not met')
+      }
+    } else {
+      // For general queries, try to parse JSON response
+      try {
+        const parsed = JSON.parse(reply)
+        message = parsed.message || ''
+        filters = parsed.filters || filters
+      } catch (e) {
+        message = 'Sorry, I had trouble understanding. Could you rephrase?'
+      }
+    }
+    
+    res.json({ message, filters, suggestedProperties })
+  } catch (err) {
+    console.error('OpenAI error:', err.message)
+    res.status(500).json({ error: 'Failed to process prompt' })
+  }
+})
+
+router.post('/compare-summary', async (req, res) => {
+  const { properties } = req.body
+  if (!Array.isArray(properties) || properties.length < 2) {
+    return res.status(400).json({ error: 'At least two properties are required for comparison.' })
+  }
+  try {
+    // Remove image_url and unrelated fields from each property for the prompt
+    const filteredProps = properties.map(({ image_url, ...rest }) => rest)
+    const propDescriptions = filteredProps.map((p, i) => `Property ${i + 1}: ${JSON.stringify(p)}`).join('\n')
+    const prompt = `You are a real estate expert. Keep it under 200 words and as one single paragraph. Compare the following properties for a home buyer. Ignore image URLs and unrelated metadata. Focus on actionable recommendations based on the user's portfolio (budget, location, bedrooms, etc.). Present the comparison as a paragraph markdown recommendation for the user. Do not return JSON.\n${propDescriptions}`
+    const gptResponse = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You are a helpful real estate assistant. Given a list of property details, provide a concise, friendly, and helpful summary comparing them for a home buyer. Ignore image URLs and unrelated metadata. Focus on actionable recommendations based on the user portfolio (budget, location, bedrooms, etc.). Always respond in markdown, and follow the user instructions for format.' },
+        { role: 'user', content: prompt }
+      ]
+    })
+    const markdown = gptResponse.choices[0].message.content
+    res.json({ markdown })
+  } catch (err) {
+    console.error('OpenAI error:', err.message)
+    res.status(500).json({ error: 'Failed to generate comparison summary' })
+  }
+})
+
+router.post('/property-description', async (req, res) => {
+  const { property } = req.body
+  if (!property) {
+    return res.status(400).json({ error: 'Property object is required.' })
+  }
+  try {
+    // Remove image_url and unrelated fields
+    const { image_url, ...filtered } = property
+    const prompt = `You are a real estate expert. Given the following property details, write a beautiful, engaging description for a property listing. Focus on the key features, location benefits, and what makes this property special. Write in a conversational, appealing tone that would attract potential buyers. Keep it under 300 words and make it sound professional yet welcoming.\nProperty: ${JSON.stringify(filtered)}`
+    const gptResponse = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You are a helpful real estate assistant. Given a property, write a beautiful, engaging description that highlights its best features and appeals to potential buyers. Do not return JSON, just the description text.' },
+        { role: 'user', content: prompt }
+      ]
+    })
+    const description = gptResponse.choices[0].message.content
+    res.json({ description })
+  } catch (err) {
+    console.error('OpenAI error:', err.message)
+    res.status(500).json({ error: 'Failed to generate property description' })
+  }
+})
+
+router.post('/generate-and-save-description', async (req, res) => {
+  const { property } = req.body
+  if (!property) {
+    return res.status(400).json({ error: 'Property object is required.' })
+  }
+  
+  try {
+    // Remove image_url and unrelated fields
+    const { image_url, ...filtered } = property
+    const prompt = `You are a real estate expert. Given the following property details, write a beautiful, engaging description for a property listing. Focus on the key features, location benefits, and what makes this property special. Write in a conversational, appealing tone that would attract potential buyers. Keep it under 300 words and make it sound professional yet welcoming.\nProperty: ${JSON.stringify(filtered)}`
+    
+    const gptResponse = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You are a helpful real estate assistant. Given a property, write a beautiful, engaging description that highlights its best features and appeals to potential buyers. Do not return JSON, just the description text.' },
+        { role: 'user', content: prompt }
+      ]
+    })
+    
+    const description = gptResponse.choices[0].message.content
+    
+    // Save the description permanently
+    const { savePropertyDescription } = require('../utils/mergeAndFilter')
+    const saved = savePropertyDescription(property.id, description)
+    
+    if (saved) {
+      res.json({ description, saved: true })
+    } else {
+      res.status(500).json({ error: 'Failed to save description' })
+    }
+  } catch (err) {
+    console.error('OpenAI error:', err.message)
+    res.status(500).json({ error: 'Failed to generate property description' })
+  }
+})
+
+module.exports = router

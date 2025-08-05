@@ -1,0 +1,24 @@
+
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: all;
+}
+
+*{
+  font-family: "Jura", serif;
+}
+
+.font-logo{
+  font-family: "Jura", serif;
+}
+
+.page-body {
+  @apply bg-gradient-to-t from-blue-100 to-white;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
