@@ -57,10 +57,14 @@ IMPORTANT: When users say they don't like a property or express concerns, be pos
   }
 
   // Check if user is asking about other properties or expressing dislike
-  const propertyKeywords = ['other property', 'different property', 'another property', 'similar property', 'more properties', 'show me properties', 'find properties', 'search properties', 'browse properties', 'view properties', 'show me alternatives', 'other options', 'show other properties', 'show properties', 'properties from', 'new york properties'];
+  const propertyKeywords = ['other property', 'different property', 'another property', 'similar property', 'more properties', 'show me properties', 'find properties', 'search properties', 'browse properties', 'view properties', 'show me alternatives', 'other options', 'show other properties', 'show properties', 'properties from', 'new york properties', 'show', 'properties', 'property', 'seattle', 'new york', 'miami', 'chicago', 'dallas', 'los angeles', 'boston', 'philadelphia', 'atlanta', 'denver', 'phoenix', 'san francisco', 'austin', 'nashville', 'portland', 'orlando', 'las vegas', 'san diego', 'tampa', 'minneapolis', 'detroit', 'cleveland', 'pittsburgh', 'cincinnati', 'indianapolis', 'columbus', 'milwaukee', 'kansas city', 'st louis', 'baltimore', 'washington', 'richmond', 'charlotte', 'raleigh', 'jacksonville', 'memphis', 'louisville', 'oklahoma city', 'tulsa', 'omaha', 'des moines', 'springfield', 'albany', 'buffalo', 'rochester', 'syracuse', 'utica', 'binghamton', 'kingston', 'poughkeepsie', 'newburgh', 'middletown', 'poughkeepsie', 'newburgh', 'middletown'];
   const dislikeKeywords = ['don\'t like', 'not interested', 'not what i want', 'prefer something else', 'hate', 'dislike', 'not for me'];
   
-  const isAskingForProperties = propertyKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
+  // More flexible property detection
+  const promptLower = prompt.toLowerCase();
+  const isAskingForProperties = propertyKeywords.some(keyword => promptLower.includes(keyword)) || 
+                                promptLower.includes('show') && (promptLower.includes('property') || promptLower.includes('properties') || 
+                                /(seattle|new york|miami|chicago|dallas|los angeles|boston|philadelphia|atlanta|denver|phoenix|san francisco|austin|nashville|portland|orlando|las vegas|san diego|tampa|minneapolis|detroit|cleveland|pittsburgh|cincinnati|indianapolis|columbus|milwaukee|kansas city|st louis|baltimore|washington|richmond|charlotte|raleigh|jacksonville|memphis|louisville|oklahoma city|tulsa|omaha|des moines|springfield|albany|buffalo|rochester|syracuse|utica|binghamton|kingston|poughkeepsie|newburgh|middletown)/.test(promptLower));
   const isExpressingDislike = dislikeKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
 
   try {
@@ -93,24 +97,44 @@ IMPORTANT: When users say they don't like a property or express concerns, be pos
         console.log('Current property location:', propertyContext.location)
         console.log('Total available properties:', allProperties.length)
         
-        // Filter out current property and suggest exactly 3 others, prioritizing same location
-        const currentLocation = propertyContext.location || ''
-        const sameLocationProps = allProperties
-          .filter(p => p.id !== propertyContext.id && p.location && p.location.toLowerCase().includes(currentLocation.toLowerCase()))
+        // Extract location from user's query
+        const locationKeywords = ['from', 'in', 'at', 'near', 'around', 'properties from', 'properties in', 'properties at', 'properties near', 'properties around']
+        let requestedLocation = ''
+        
+        for (const keyword of locationKeywords) {
+          if (prompt.toLowerCase().includes(keyword)) {
+            const parts = prompt.toLowerCase().split(keyword)
+            if (parts.length > 1) {
+              requestedLocation = parts[1].trim().split(' ')[0] // Get the first word after the keyword
+              break
+            }
+          }
+        }
+        
+        // If no specific location requested, use current property location
+        if (!requestedLocation) {
+          requestedLocation = propertyContext.location || ''
+        }
+        
+        console.log('🎯 Requested location from user query:', requestedLocation)
+        
+        // Filter properties by requested location first, then fallback to other locations
+        const locationProps = allProperties
+          .filter(p => p.id !== propertyContext.id && p.location && p.location.toLowerCase().includes(requestedLocation.toLowerCase()))
           .slice(0, 3)
         
-        console.log('🏠 Same location properties found:', sameLocationProps.length)
+        console.log('🏠 Location-specific properties found:', locationProps.length)
         
         let otherProps = []
-        if (sameLocationProps.length < 3) {
+        if (locationProps.length < 3) {
           otherProps = allProperties
-            .filter(p => p.id !== propertyContext.id && (!p.location || !p.location.toLowerCase().includes(currentLocation.toLowerCase())))
-            .slice(0, 3 - sameLocationProps.length)
+            .filter(p => p.id !== propertyContext.id && (!p.location || !p.location.toLowerCase().includes(requestedLocation.toLowerCase())))
+            .slice(0, 3 - locationProps.length)
         }
         
         console.log('🏠 Other location properties found:', otherProps.length)
         
-        suggestedProperties = [...sameLocationProps, ...otherProps]
+        suggestedProperties = [...locationProps, ...otherProps]
           .slice(0, 3) // Ensure exactly 3 properties
           .map(p => ({
             id: p.id,

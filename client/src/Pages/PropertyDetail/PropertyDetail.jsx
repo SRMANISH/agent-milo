@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Send, Star, MapPin, Home, School, Hospital, Building2, Calculator, ArrowLeft, RefreshCw, Train, Plane } from 'lucide-react'
+import { Send, Star, MapPin, Home, School, Hospital, Building2, Calculator, ArrowLeft, RefreshCw, Train, Plane, TreePine } from 'lucide-react'
 import axios from 'axios'
 import globalState from '../../utils/globalState'
 
@@ -22,7 +22,8 @@ const PropertyDetail = () => {
     hospitals: [],
     banks: [],
     restaurants: [],
-    transportation: []
+    transportation: [],
+    parks: []
   })
   const [paymentDetails, setPaymentDetails] = useState({
     downPayment: 20,
@@ -39,7 +40,6 @@ const PropertyDetail = () => {
     window.scrollTo(0, 0)
     
     fetchPropertyDetails()
-    fetchNearbyPlaces()
     
     // Subscribe to global state changes
     const unsubscribeSaved = globalState.subscribe('saved', () => {
@@ -57,6 +57,7 @@ const PropertyDetail = () => {
       window.scrollTo(0, 0)
       fetchAiDescription()
       fetchRelatedProperties()
+      fetchNearbyPlaces()
     }
   }, [property])
 
@@ -101,12 +102,70 @@ const PropertyDetail = () => {
   }
 
   const fetchNearbyPlaces = async () => {
-    // Use stored nearby places data from property
-    if (property && property.nearbyPlaces) {
-      setNearbyPlaces(property.nearbyPlaces)
-    } else {
-      // Fallback data if not available
+    try {
+      console.log('fetchNearbyPlaces called with property:', property)
+      // Use stored nearby places data from property
+      if (property && property.nearbyPlaces) {
+        console.log('Using stored nearby places:', property.nearbyPlaces)
+        setNearbyPlaces(property.nearbyPlaces)
+      } else {
+        // Generate location-specific data based on property location
+        const locationData = generateLocationSpecificData(property?.location || '')
+        console.log('Generated location data:', locationData)
+        setNearbyPlaces(locationData)
+      }
+    } catch (error) {
+      console.error('Error in fetchNearbyPlaces:', error)
+      // Set default data if there's an error
       setNearbyPlaces({
+        schools: [],
+        hospitals: [],
+        banks: [],
+        restaurants: [],
+        transportation: [],
+        parks: []
+      })
+    }
+  }
+
+  const generateLocationSpecificData = (location) => {
+    const locationLower = location.toLowerCase()
+    
+    // Location-specific data mapping
+    const locationData = {
+      'new york': {
+        schools: [
+          { name: 'PS 321 William Penn', distance: '0.3mi', rating: '9/10', type: 'Public Elementary' },
+          { name: 'Brooklyn Technical High School', distance: '0.8mi', rating: '8/10', type: 'Public High' },
+          { name: 'St. Ann\'s School', distance: '1.2mi', rating: '9/10', type: 'Private K-12' }
+        ],
+        hospitals: [
+          { name: 'NYU Langone Medical Center', distance: '1.5mi', type: 'Academic Medical Center', emergency: true },
+          { name: 'Mount Sinai Hospital', distance: '2.1mi', type: 'General Hospital', emergency: true },
+          { name: 'Bellevue Hospital Center', distance: '2.8mi', type: 'Public Hospital', emergency: true }
+        ],
+        banks: [
+          { name: 'Chase Bank', distance: '0.4mi', type: 'Full Service Bank', atm: true },
+          { name: 'Bank of America', distance: '0.7mi', type: 'Full Service Bank', atm: true },
+          { name: 'Citibank', distance: '1.1mi', type: 'Full Service Bank', atm: true }
+        ],
+        restaurants: [
+          { name: 'Grimaldi\'s Pizzeria', distance: '0.2mi', type: 'Pizzeria', cuisine: 'Italian' },
+          { name: 'Peter Luger Steak House', distance: '0.6mi', type: 'Steakhouse', cuisine: 'American' },
+          { name: 'Katz\'s Delicatessen', distance: '1.3mi', type: 'Deli', cuisine: 'Jewish' }
+        ],
+                              transportation: [
+                        { name: 'JFK International Airport', distance: '12.5mi', type: 'International Airport', drive_time: '25 min' },
+                        { name: 'LaGuardia Airport', distance: '8.2mi', type: 'Domestic Airport', drive_time: '20 min' },
+                        { name: 'Grand Central Terminal', distance: '3.1mi', type: 'Train Station', drive_time: '8 min' }
+                      ],
+                      parks: [
+                        { name: 'Central Park', distance: '1.2mi', type: 'Urban Park', features: 'Walking trails, lakes, playgrounds' },
+                        { name: 'Brooklyn Bridge Park', distance: '0.8mi', type: 'Waterfront Park', features: 'Piers, gardens, sports courts' },
+                        { name: 'Prospect Park', distance: '2.1mi', type: 'Recreation Park', features: 'Botanical gardens, zoo, sports fields' }
+                      ]
+      },
+      'miami': {
         schools: [
           { name: 'Royal Green Elementary School', distance: '0.4mi', rating: '8/10', type: 'Public Elementary' },
           { name: 'Howard D. Mcmillan Middle School', distance: '0.4mi', rating: '5/10', type: 'Public Middle' },
@@ -114,7 +173,8 @@ const PropertyDetail = () => {
         ],
         hospitals: [
           { name: 'Kendall Regional Medical Center', distance: '2.1mi', type: 'General Hospital', emergency: true },
-          { name: 'Baptist Hospital of Miami', distance: '3.5mi', type: 'General Hospital', emergency: true }
+          { name: 'Baptist Hospital of Miami', distance: '3.5mi', type: 'General Hospital', emergency: true },
+          { name: 'Jackson Memorial Hospital', distance: '4.2mi', type: 'Academic Medical Center', emergency: true }
         ],
         banks: [
           { name: 'Bank of America', distance: '0.8mi', type: 'Full Service Bank', atm: true },
@@ -122,16 +182,158 @@ const PropertyDetail = () => {
           { name: 'Chase Bank', distance: '1.5mi', type: 'Full Service Bank', atm: true }
         ],
         restaurants: [
-          { name: 'Subway', distance: '0.3mi', type: 'Fast Food', cuisine: 'Sandwiches' },
-          { name: 'McDonald\'s', distance: '0.6mi', type: 'Fast Food', cuisine: 'American' },
-          { name: 'Pizza Hut', distance: '0.9mi', type: 'Fast Food', cuisine: 'Italian' }
+          { name: 'Versailles Restaurant', distance: '0.3mi', type: 'Cuban Restaurant', cuisine: 'Cuban' },
+          { name: 'Joe\'s Stone Crab', distance: '0.8mi', type: 'Seafood Restaurant', cuisine: 'Seafood' },
+          { name: 'La Carreta', distance: '1.2mi', type: 'Cuban Restaurant', cuisine: 'Cuban' }
         ],
         transportation: [
           { name: 'Miami International Airport', distance: '8.2mi', type: 'International Airport', drive_time: '15 min' },
           { name: 'Dadeland South Metrorail Station', distance: '2.3mi', type: 'Metro Rail', drive_time: '5 min' },
           { name: 'South Miami Metrorail Station', distance: '3.1mi', type: 'Metro Rail', drive_time: '7 min' }
+        ],
+        parks: [
+          { name: 'Bayfront Park', distance: '0.6mi', type: 'Waterfront Park', features: 'Marina, amphitheater, gardens' },
+          { name: 'Vizcaya Museum & Gardens', distance: '2.3mi', type: 'Historic Park', features: 'Italian gardens, museum, bay views' },
+          { name: 'Crandon Park', distance: '8.1mi', type: 'Beach Park', features: 'Beach access, tennis courts, nature trails' }
         ]
-      })
+      },
+      'chicago': {
+        schools: [
+          { name: 'Lincoln Elementary School', distance: '0.5mi', rating: '9/10', type: 'Public Elementary' },
+          { name: 'Whitney M. Young Magnet High School', distance: '1.2mi', rating: '8/10', type: 'Public High' },
+          { name: 'University of Chicago Lab Schools', distance: '2.1mi', rating: '10/10', type: 'Private K-12' }
+        ],
+        hospitals: [
+          { name: 'Northwestern Memorial Hospital', distance: '1.8mi', type: 'Academic Medical Center', emergency: true },
+          { name: 'Rush University Medical Center', distance: '2.5mi', type: 'Academic Medical Center', emergency: true },
+          { name: 'University of Chicago Medical Center', distance: '3.2mi', type: 'Academic Medical Center', emergency: true }
+        ],
+        banks: [
+          { name: 'Chase Bank', distance: '0.6mi', type: 'Full Service Bank', atm: true },
+          { name: 'Bank of America', distance: '0.9mi', type: 'Full Service Bank', atm: true },
+          { name: 'Wells Fargo', distance: '1.4mi', type: 'Full Service Bank', atm: true }
+        ],
+        restaurants: [
+          { name: 'Giordano\'s', distance: '0.4mi', type: 'Pizzeria', cuisine: 'Italian' },
+          { name: 'Portillo\'s', distance: '0.8mi', type: 'Fast Casual', cuisine: 'American' },
+          { name: 'Alinea', distance: '1.5mi', type: 'Fine Dining', cuisine: 'Contemporary' }
+        ],
+        transportation: [
+          { name: 'O\'Hare International Airport', distance: '15.2mi', type: 'International Airport', drive_time: '30 min' },
+          { name: 'Midway International Airport', distance: '8.5mi', type: 'Domestic Airport', drive_time: '18 min' },
+          { name: 'Union Station', distance: '2.1mi', type: 'Train Station', drive_time: '6 min' }
+        ],
+        parks: [
+          { name: 'Millennium Park', distance: '1.2mi', type: 'Urban Park', features: 'Cloud Gate, gardens, ice rink' },
+          { name: 'Grant Park', distance: '1.8mi', type: 'Urban Park', features: 'Buckingham Fountain, museums, gardens' },
+          { name: 'Lincoln Park', distance: '2.5mi', type: 'Urban Park', features: 'Zoo, conservatory, beaches' }
+        ]
+      },
+      'dallas': {
+        schools: [
+          { name: 'Highland Park Elementary School', distance: '0.7mi', rating: '9/10', type: 'Public Elementary' },
+          { name: 'Highland Park High School', distance: '1.1mi', rating: '8/10', type: 'Public High' },
+          { name: 'St. Mark\'s School of Texas', distance: '1.8mi', rating: '10/10', type: 'Private K-12' }
+        ],
+        hospitals: [
+          { name: 'UT Southwestern Medical Center', distance: '2.3mi', type: 'Academic Medical Center', emergency: true },
+          { name: 'Baylor University Medical Center', distance: '3.1mi', type: 'General Hospital', emergency: true },
+          { name: 'Texas Health Presbyterian Hospital', distance: '3.8mi', type: 'General Hospital', emergency: true }
+        ],
+        banks: [
+          { name: 'Bank of America', distance: '0.5mi', type: 'Full Service Bank', atm: true },
+          { name: 'Chase Bank', distance: '0.9mi', type: 'Full Service Bank', atm: true },
+          { name: 'Wells Fargo', distance: '1.3mi', type: 'Full Service Bank', atm: true }
+        ],
+        restaurants: [
+          { name: 'Pecan Lodge', distance: '0.6mi', type: 'BBQ Restaurant', cuisine: 'Texas BBQ' },
+          { name: 'Uchi Dallas', distance: '1.2mi', type: 'Fine Dining', cuisine: 'Japanese' },
+          { name: 'El Fenix', distance: '1.8mi', type: 'Mexican Restaurant', cuisine: 'Mexican' }
+        ],
+        transportation: [
+          { name: 'Dallas/Fort Worth International Airport', distance: '18.5mi', type: 'International Airport', drive_time: '35 min' },
+          { name: 'Dallas Love Field Airport', distance: '6.2mi', type: 'Domestic Airport', drive_time: '12 min' },
+          { name: 'Dallas Union Station', distance: '2.8mi', type: 'Train Station', drive_time: '7 min' }
+        ],
+        parks: [
+          { name: 'Klyde Warren Park', distance: '0.8mi', type: 'Urban Park', features: 'Food trucks, playground, dog park' },
+          { name: 'White Rock Lake Park', distance: '3.2mi', type: 'Lake Park', features: 'Boating, hiking trails, picnic areas' },
+          { name: 'Dallas Arboretum', distance: '4.1mi', type: 'Botanical Garden', features: 'Gardens, events, children\'s area' }
+        ]
+      },
+      'los angeles': {
+        schools: [
+          { name: 'Beverly Hills High School', distance: '0.9mi', rating: '8/10', type: 'Public High' },
+          { name: 'Harvard-Westlake School', distance: '1.5mi', rating: '10/10', type: 'Private K-12' },
+          { name: 'Brentwood School', distance: '2.1mi', rating: '9/10', type: 'Private K-12' }
+        ],
+        hospitals: [
+          { name: 'Cedars-Sinai Medical Center', distance: '1.8mi', type: 'Academic Medical Center', emergency: true },
+          { name: 'UCLA Medical Center', distance: '3.2mi', type: 'Academic Medical Center', emergency: true },
+          { name: 'Providence Saint John\'s Health Center', distance: '4.1mi', type: 'General Hospital', emergency: true }
+        ],
+        banks: [
+          { name: 'Chase Bank', distance: '0.4mi', type: 'Full Service Bank', atm: true },
+          { name: 'Bank of America', distance: '0.8mi', type: 'Full Service Bank', atm: true },
+          { name: 'Wells Fargo', distance: '1.2mi', type: 'Full Service Bank', atm: true }
+        ],
+        restaurants: [
+          { name: 'Nobu Los Angeles', distance: '0.6mi', type: 'Fine Dining', cuisine: 'Japanese' },
+          { name: 'In-N-Out Burger', distance: '1.1mi', type: 'Fast Food', cuisine: 'American' },
+          { name: 'Pink\'s Hot Dogs', distance: '1.8mi', type: 'Fast Food', cuisine: 'American' }
+        ],
+        transportation: [
+          { name: 'Los Angeles International Airport', distance: '12.8mi', type: 'International Airport', drive_time: '25 min' },
+          { name: 'Burbank Airport', distance: '8.5mi', type: 'Domestic Airport', drive_time: '18 min' },
+          { name: 'Union Station', distance: '4.2mi', type: 'Train Station', drive_time: '10 min' }
+        ],
+        parks: [
+          { name: 'Griffith Park', distance: '3.2mi', type: 'Urban Park', features: 'Observatory, hiking trails, zoo' },
+          { name: 'Runyon Canyon Park', distance: '1.8mi', type: 'Hiking Park', features: 'Hiking trails, dog park, city views' },
+          { name: 'Venice Beach Boardwalk', distance: '5.1mi', type: 'Beach Park', features: 'Beach access, street performers, shops' }
+        ]
+      }
+    }
+
+    // Find matching location or use default
+    for (const [city, data] of Object.entries(locationData)) {
+      if (locationLower.includes(city)) {
+        return data
+      }
+    }
+
+    // Default data for unknown locations
+    return {
+      schools: [
+        { name: 'Local Elementary School', distance: '0.5mi', rating: '7/10', type: 'Public Elementary' },
+        { name: 'Community Middle School', distance: '0.8mi', rating: '6/10', type: 'Public Middle' },
+        { name: 'Regional High School', distance: '1.2mi', rating: '7/10', type: 'Public High' }
+      ],
+      hospitals: [
+        { name: 'Regional Medical Center', distance: '2.0mi', type: 'General Hospital', emergency: true },
+        { name: 'Community Hospital', distance: '3.5mi', type: 'General Hospital', emergency: true },
+        { name: 'City Health Center', distance: '4.2mi', type: 'Urgent Care', emergency: false }
+      ],
+      banks: [
+        { name: 'Local Bank Branch', distance: '0.7mi', type: 'Full Service Bank', atm: true },
+        { name: 'Community Credit Union', distance: '1.1mi', type: 'Credit Union', atm: true },
+        { name: 'National Bank', distance: '1.6mi', type: 'Full Service Bank', atm: true }
+      ],
+      restaurants: [
+        { name: 'Local Diner', distance: '0.4mi', type: 'Casual Dining', cuisine: 'American' },
+        { name: 'Family Restaurant', distance: '0.9mi', type: 'Casual Dining', cuisine: 'International' },
+        { name: 'Pizza Place', distance: '1.3mi', type: 'Casual Dining', cuisine: 'Italian' }
+      ],
+      transportation: [
+        { name: 'Nearest Airport', distance: '10.0mi', type: 'Airport', drive_time: '20 min' },
+        { name: 'Local Train Station', distance: '2.5mi', type: 'Train Station', drive_time: '6 min' },
+        { name: 'Bus Terminal', distance: '1.8mi', type: 'Bus Station', drive_time: '4 min' }
+      ],
+      parks: [
+        { name: 'Community Park', distance: '0.8mi', type: 'Local Park', features: 'Playground, picnic areas, walking trails' },
+        { name: 'City Recreation Center', distance: '1.5mi', type: 'Recreation Park', features: 'Sports courts, pool, fitness center' },
+        { name: 'Nature Preserve', distance: '2.2mi', type: 'Natural Park', features: 'Hiking trails, wildlife viewing, nature center' }
+      ]
     }
   }
 
@@ -606,90 +808,174 @@ const PropertyDetail = () => {
         </div>
 
         {/* Nearby Places Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Around This Home</h2>
+        <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-2xl shadow-xl border border-blue-100 p-8 mb-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Around This Home</h2>
+            <p className="text-gray-600">Discover what's nearby in this vibrant neighborhood</p>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Schools */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                <School size={20} className="mr-2" />
-                Schools
-              </h3>
-              <div className="space-y-2">
-                {nearbyPlaces.schools.map((school, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-sm">{school.name}</div>
-                    <div className="text-xs text-gray-600">{school.type} • Rating: {school.rating}</div>
-                    <div className="text-xs text-gray-500">{school.distance}</div>
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-100 p-3 rounded-full mr-3">
+                  <School size={24} className="text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Schools</h3>
+              </div>
+              <div className="space-y-3">
+                {(nearbyPlaces.schools || []).map((school, index) => (
+                  <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 hover:border-blue-200 transition-all duration-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-semibold text-gray-900 text-sm">{school.name}</div>
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                        {school.rating}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">{school.type}</div>
+                    <div className="flex items-center text-xs text-blue-600 font-medium">
+                      <MapPin size={12} className="mr-1" />
+                      {school.distance}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Hospitals */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                <Hospital size={20} className="mr-2" />
-                Hospitals
-              </h3>
-              <div className="space-y-2">
-                {nearbyPlaces.hospitals.map((hospital, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-sm">{hospital.name}</div>
-                    <div className="text-xs text-gray-600">{hospital.type}</div>
-                    <div className="text-xs text-gray-500">{hospital.distance}</div>
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-100 p-3 rounded-full mr-3">
+                  <Hospital size={24} className="text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Hospitals</h3>
+              </div>
+              <div className="space-y-3">
+                {(nearbyPlaces.hospitals || []).map((hospital, index) => (
+                  <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 hover:border-blue-200 transition-all duration-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-semibold text-gray-900 text-sm">{hospital.name}</div>
+                      {hospital.emergency && (
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                          ER
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">{hospital.type}</div>
+                    <div className="flex items-center text-xs text-blue-600 font-medium">
+                      <MapPin size={12} className="mr-1" />
+                      {hospital.distance}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Banks */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                <Building2 size={20} className="mr-2" />
-                Banks
-              </h3>
-              <div className="space-y-2">
-                {nearbyPlaces.banks.map((bank, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-sm">{bank.name}</div>
-                    <div className="text-xs text-gray-600">{bank.type}</div>
-                    <div className="text-xs text-gray-500">{bank.distance}</div>
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-100 p-3 rounded-full mr-3">
+                  <Building2 size={24} className="text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Banks</h3>
+              </div>
+              <div className="space-y-3">
+                {(nearbyPlaces.banks || []).map((bank, index) => (
+                  <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 hover:border-blue-200 transition-all duration-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-semibold text-gray-900 text-sm">{bank.name}</div>
+                      {bank.atm && (
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                          ATM
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">{bank.type}</div>
+                    <div className="flex items-center text-xs text-blue-600 font-medium">
+                      <MapPin size={12} className="mr-1" />
+                      {bank.distance}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Restaurants */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                <Building2 size={20} className="mr-2" />
-                Restaurants
-              </h3>
-              <div className="space-y-2">
-                {nearbyPlaces.restaurants.map((restaurant, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-sm">{restaurant.name}</div>
-                    <div className="text-xs text-gray-600">{restaurant.type} • {restaurant.cuisine}</div>
-                    <div className="text-xs text-gray-500">{restaurant.distance}</div>
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-100 p-3 rounded-full mr-3">
+                  <Building2 size={24} className="text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Restaurants</h3>
+              </div>
+              <div className="space-y-3">
+                {(nearbyPlaces.restaurants || []).map((restaurant, index) => (
+                  <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 hover:border-blue-200 transition-all duration-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-semibold text-gray-900 text-sm">{restaurant.name}</div>
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                        {restaurant.cuisine}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">{restaurant.type}</div>
+                    <div className="flex items-center text-xs text-blue-600 font-medium">
+                      <MapPin size={12} className="mr-1" />
+                      {restaurant.distance}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Transportation */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                <Train size={20} className="mr-2" />
-                Transportation
-              </h3>
-              <div className="space-y-2">
-                {nearbyPlaces.transportation.map((transport, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-sm">{transport.name}</div>
-                    <div className="text-xs text-gray-600">{transport.type}</div>
-                    <div className="text-xs text-gray-500">{transport.distance} • {transport.drive_time}</div>
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-100 p-3 rounded-full mr-3">
+                  <Train size={24} className="text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Transportation</h3>
+              </div>
+              <div className="space-y-3">
+                {(nearbyPlaces.transportation || []).map((transport, index) => (
+                  <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 hover:border-blue-200 transition-all duration-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-semibold text-gray-900 text-sm">{transport.name}</div>
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                        {transport.type}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">{transport.drive_time}</div>
+                    <div className="flex items-center text-xs text-blue-600 font-medium">
+                      <MapPin size={12} className="mr-1" />
+                      {transport.distance}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Parks & Entertainment */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center mb-4">
+                <div className="bg-blue-100 p-3 rounded-full mr-3">
+                  <TreePine size={24} className="text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Parks & Entertainment</h3>
+              </div>
+              <div className="space-y-3">
+                {(nearbyPlaces.parks || []).map((park, index) => (
+                  <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 hover:border-blue-200 transition-all duration-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-semibold text-gray-900 text-sm">{park.name}</div>
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                        {park.type}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">{park.features}</div>
+                    <div className="flex items-center text-xs text-blue-600 font-medium">
+                      <MapPin size={12} className="mr-1" />
+                      {park.distance}
+                    </div>
                   </div>
                 ))}
               </div>

@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import globalState from '../../utils/globalState'
 import { useNavigate } from 'react-router-dom'
+import HeroImage from '../../assets/HeroImage.png'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
@@ -23,7 +24,9 @@ const FindProperty = () => {
   const [showModal, setShowModal] = useState(false)
   const [categorizedResults, setCategorizedResults] = useState({})
   const [loading, setLoading] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(true)
   const messagesEndRef = useRef(null)
+  const chatContainerRef = useRef(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -71,6 +74,11 @@ const FindProperty = () => {
       setStep(3)
       setInput('')
       setLoading(false)
+      setShowWelcome(false)
+      // Smooth scroll to top when properties are displayed
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 100)
       return
     }
 
@@ -97,6 +105,11 @@ const FindProperty = () => {
       setStep(3)
       setInput('')
       setLoading(false)
+      setShowWelcome(false)
+      // Smooth scroll to top when properties are displayed
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 100)
       return
     }
 
@@ -121,6 +134,11 @@ const FindProperty = () => {
       setStep(3)
       setInput('')
       setLoading(false)
+      setShowWelcome(false)
+      // Smooth scroll to top when properties are displayed
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 100)
       return
     }
 
@@ -138,6 +156,11 @@ const FindProperty = () => {
       await categorizeAndDisplay(newFilters)
       setStep(3)
       setLoading(false)
+      setShowWelcome(false)
+      // Smooth scroll to top when properties are displayed
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 100)
     }
 
     setFilters(newFilters)
@@ -226,6 +249,11 @@ const FindProperty = () => {
     setCategorizedResults({})
     setCompare([])
     setInput('')
+    setShowWelcome(true)
+    // Smooth scroll to top when resetting
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, 100)
   }
 
   useEffect(() => {
@@ -250,6 +278,8 @@ const FindProperty = () => {
     fetchSavedProperties()
   }, [])
 
+  // No scroll handling needed - using sticky positioning for Redfin-style layout
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -262,22 +292,23 @@ const FindProperty = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-6">
+        <div className="flex">
+          {/* Fixed Left Sidebar - Chatbot */}
+          <div className="w-1/3 pr-8" ref={chatContainerRef}>
+            <div className="sticky top-0 bg-slate-800 rounded-2xl shadow-2xl border border-slate-600 overflow-hidden">
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6">
                 <h2 className="text-2xl font-light text-white mb-2">Property Assistant</h2>
                 <p className="text-slate-300 text-sm">Let me help you find the perfect property</p>
               </div>
               
-              <div className="h-[600px] flex flex-col">
+              <div className="h-[500px] flex flex-col">
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {messages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-xs px-4 py-3 rounded-2xl ${
                         msg.from === 'user' 
                           ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
-                          : 'bg-slate-100 text-slate-800 shadow-sm'
+                          : 'bg-slate-700 text-slate-200 shadow-sm'
                       }`}>
                         <p className="text-sm leading-relaxed">{msg.text}</p>
                       </div>
@@ -285,7 +316,7 @@ const FindProperty = () => {
                   ))}
                   {loading && (
                     <div className="flex justify-start">
-                      <div className="bg-slate-100 text-slate-800 px-4 py-3 rounded-2xl shadow-sm">
+                      <div className="bg-slate-700 text-slate-200 px-4 py-3 rounded-2xl shadow-sm">
                         <div className="flex space-x-1">
                           <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
                           <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -297,10 +328,10 @@ const FindProperty = () => {
                   <div ref={messagesEndRef} />
                 </div>
                 
-                <div className="border-t border-slate-200 p-4 bg-slate-50">
+                <div className="border-t border-slate-600 p-4 bg-slate-700">
                   <div className="flex gap-3">
                     <input
-                      className="flex-1 px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="flex-1 px-4 py-3 border border-slate-500 bg-slate-600 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
                       placeholder="Describe your dream property..."
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
@@ -316,13 +347,13 @@ const FindProperty = () => {
                   <div className="flex gap-2 mt-3">
                     <button 
                       onClick={resetChat} 
-                      className="px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors duration-200 text-sm"
+                      className="px-4 py-2 text-slate-300 hover:text-white transition-colors duration-200 text-sm"
                     >
                       <RefreshCcw size={16} className="inline mr-1" />
                       Reset
                     </button>
                     <button
-                      className="px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors duration-200 text-sm"
+                      className="px-4 py-2 text-slate-300 hover:text-white transition-colors duration-200 text-sm"
                       onClick={async () => {
                         setLoading(true)
                         const all = await getAllResults()
@@ -330,6 +361,11 @@ const FindProperty = () => {
                         setStep(3)
                         setMessages(prev => [...prev, { from: 'bot', text: `Presenting our complete collection of ${all.length} exceptional properties.` }])
                         setLoading(false)
+                        setShowWelcome(false)
+                        // Smooth scroll to top when properties are displayed
+                        setTimeout(() => {
+                          window.scrollTo({ top: 0, behavior: 'smooth' })
+                        }, 100)
                       }}
                     >
                       View All Properties
@@ -340,9 +376,86 @@ const FindProperty = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-2">
+          {/* Scrollable Right Content */}
+          <div className="w-2/3">
+            {/* Welcome Section */}
+            {showWelcome && (
+              <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-600 overflow-hidden welcome-transition fade-in">
+                <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-8">
+                  <h2 className="text-3xl font-light text-white mb-4">Welcome to Your Property Journey</h2>
+                  <p className="text-slate-300 text-lg mb-6">Discover exceptional homes that match your lifestyle and dreams.</p>
+                </div>
+                
+                <div className="p-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div className="space-y-6">
+                      <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-6 rounded-xl">
+                        <h3 className="text-xl font-semibold text-white mb-3">Featured Properties</h3>
+                        <ul className="space-y-2 text-slate-300">
+                          <li className="flex items-center">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                            Luxury waterfront estates
+                          </li>
+                          <li className="flex items-center">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                            Modern city apartments
+                          </li>
+                          <li className="flex items-center">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                            Family-friendly suburbs
+                          </li>
+                          <li className="flex items-center">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                            Investment opportunities
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-6 rounded-xl">
+                        <h3 className="text-xl font-semibold text-white mb-3">Search Tips</h3>
+                        <ul className="space-y-2 text-slate-300">
+                          <li className="flex items-start">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0 mt-2"></div>
+                            <span>Find Properties in New York With Three bedrooms for a price less than 500,000 dollars</span>
+                          </li>
+                          <li className="flex items-center">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                            Beach front properties
+                          </li>
+                          <li className="flex items-center">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                            Show Me Properties From the East
+                          </li>
+                          <li className="flex items-center">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                            View All Properties
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <div className="relative">
+                        <img
+                          src={HeroImage}
+                          alt="Property Search Hero"
+                          className="w-full max-w-sm h-auto rounded-xl shadow-2xl hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute -bottom-4 -right-4 bg-white rounded-full p-3 shadow-lg">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                            <span className="text-white text-sm font-bold">AI</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Properties Results */}
             {Object.keys(categorizedResults).length > 0 && (
-              <div className="space-y-8">
+              <div className="space-y-8 welcome-transition fade-in">
                 {Object.entries(categorizedResults).map(([label, list]) => (
                   <div key={label} className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                     <div className="bg-gradient-to-r from-slate-50 to-slate-100 px-8 py-6 border-b border-slate-200">
@@ -357,7 +470,7 @@ const FindProperty = () => {
                         {list.map(p => (
                           <div 
                             key={p.id} 
-                            className="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer"
+                            className="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover-lift cursor-pointer"
                             onClick={() => navigate(`/property/${p.id}`)}
                           >
                             <div className="relative overflow-hidden">
