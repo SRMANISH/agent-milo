@@ -39,6 +39,12 @@ const PropertyDetail = () => {
     // Scroll to top when component mounts
     window.scrollTo(0, 0)
     
+    // Reset chat when property ID changes
+    setChatMessages([
+      { from: 'bot', text: 'Hi there! 👋 I can help you with any questions about this property.' }
+    ])
+    setSuggestedProperties([])
+    
     fetchPropertyDetails()
     
     // Subscribe to global state changes
@@ -382,6 +388,47 @@ const PropertyDetail = () => {
     }
   }
 
+  const callOpenAI = async (userInput) => {
+    try {
+      console.log('🤖 Calling OpenAI API from PropertyDetail...')
+      console.log('📝 Request data:', {
+        prompt: userInput.toLowerCase(),
+        historyLength: chatMessages.slice(-5).length,
+        hasPropertyContext: !!property
+      })
+      
+      const response = await axios.post(`${BACKEND_URL}/api/ask`, {
+        prompt: userInput.toLowerCase(),
+        history: chatMessages.slice(-5),
+        propertyContext: property
+      })
+      
+      console.log('✅ OpenAI API response received:', response.data)
+      return response.data
+    } catch (error) {
+      console.error('❌ OpenAI API error:', error)
+      console.error('❌ Error response:', error.response?.data)
+      console.error('❌ Error status:', error.response?.status)
+      console.error('❌ Error message:', error.message)
+      
+      // Show more specific error messages
+      let errorMessage = 'I apologize, but I could not process your request at this moment. Please try again.'
+      
+      if (error.response?.status === 500) {
+        errorMessage = 'Server error occurred. Please try again in a moment.'
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Rate limit reached. Please wait a moment and try again.'
+      } else if (error.code === 'NETWORK_ERROR') {
+        errorMessage = 'Network error. Please check your connection and try again.'
+      }
+      
+      return { 
+        message: errorMessage, 
+        suggestedProperties: [] 
+      }
+    }
+  }
+
   const handleChatSubmit = async () => {
     if (!chatInput.trim()) return
 
@@ -389,28 +436,23 @@ const PropertyDetail = () => {
     setChatMessages(prev => [...prev, userMessage])
     setChatInput('')
 
-    try {
-      const response = await axios.post(`${BACKEND_URL}/api/ask`, {
-        prompt: chatInput,
-        history: chatMessages.slice(-5),
-        propertyContext: property
-      })
-      
-      const botMessage = { from: 'bot', text: response.data.message }
+    const aiResponse = await callOpenAI(chatInput)
+    const aiMessage = aiResponse.message || ''
+    const suggestedProps = aiResponse.suggestedProperties || []
+
+    if (aiMessage) {
+      const botMessage = { from: 'bot', text: aiMessage }
       setChatMessages(prev => [...prev, botMessage])
-      
-      // Handle suggested properties
-      console.log('Chat response:', response.data)
-      if (response.data.suggestedProperties && response.data.suggestedProperties.length > 0) {
-        console.log('Setting suggested properties:', response.data.suggestedProperties)
-        setSuggestedProperties(response.data.suggestedProperties)
-      } else {
-        console.log('No suggested properties, clearing array')
-        setSuggestedProperties([])
-      }
-    } catch {
-      const errorMessage = { from: 'bot', text: 'Sorry, I couldn\'t process your request. Please try again.' }
-      setChatMessages(prev => [...prev, errorMessage])
+    }
+    
+    // Handle suggested properties
+    console.log('Chat response:', aiResponse)
+    if (suggestedProps.length > 0) {
+      console.log('Setting suggested properties:', suggestedProps)
+      setSuggestedProperties(suggestedProps)
+    } else {
+      console.log('No suggested properties, clearing array')
+      setSuggestedProperties([])
     }
   }
 

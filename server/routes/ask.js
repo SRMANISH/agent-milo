@@ -7,23 +7,49 @@ const openai = new OpenAI({
 const fs = require('fs');
 const path = require('path');
 
+// Test endpoint to verify the route is working
+router.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Ask route is working!',
+    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    timestamp: new Date().toISOString()
+  })
+})
+
 router.post('/', async (req, res) => {
+  console.log('🚀 /api/ask endpoint called')
+  console.log('📝 Request body:', { 
+    prompt: req.body.prompt, 
+    hasHistory: !!req.body.history, 
+    hasPropertyContext: !!req.body.propertyContext 
+  })
+  
   const { prompt, history, propertyContext } = req.body
 
   // Load all properties for context
   let allProperties = [];
   try {
+    console.log('📂 Loading property data files...')
     const basics = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/property_basics.json')));
     const characteristics = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/property_characteristics.json')));
     const images = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/property_images.json')));
+    
+    console.log('📊 Data loaded:', { 
+      basics: basics.length, 
+      characteristics: characteristics.length, 
+      images: images.length 
+    })
     
     allProperties = basics.map(base => {
       const char = characteristics.find(c => c.id === base.id) || {}
       const img = images.find(i => i.id === base.id) || {}
       return { ...base, ...char, image_url: img.image_url || "" }
     });
+    
+    console.log('✅ All properties merged:', allProperties.length)
   } catch (error) {
-    console.error('Error loading properties:', error)
+    console.error('❌ Error loading properties:', error)
+    console.error('❌ Error stack:', error.stack)
     allProperties = []
   }
 
@@ -36,6 +62,19 @@ router.post('/', async (req, res) => {
 
   // Create system message based on context
   let systemMessage = `You are a helpful real estate assistant. Here is a list of all available properties: ${JSON.stringify(allProperties)}.\nHere is the recent chat history:\n${historyText}`;
+  
+  // Check if system message is too long (OpenAI has limits)
+  const systemMessageLength = systemMessage.length;
+  console.log('📏 System message length:', systemMessageLength);
+  
+  if (systemMessageLength > 32000) {
+    console.log('⚠️ System message too long, truncating...');
+    // Truncate the properties list to keep it under limits
+    const maxProperties = Math.floor(32000 / JSON.stringify(allProperties[0]).length);
+    const truncatedProperties = allProperties.slice(0, maxProperties);
+    systemMessage = `You are a helpful real estate assistant. Here is a list of available properties (showing ${truncatedProperties.length} of ${allProperties.length}): ${JSON.stringify(truncatedProperties)}.\nHere is the recent chat history:\n${historyText}`;
+    console.log('📏 Truncated system message length:', systemMessage.length);
+  }
   
   // If we have property context, focus on that specific property
   if (propertyContext) {
@@ -68,15 +107,23 @@ IMPORTANT: When users say they don't like a property or express concerns, be pos
   const isExpressingDislike = dislikeKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
 
   try {
+    console.log('🤖 Calling OpenAI API...')
+    console.log('📝 System message length:', systemMessage.length)
+    console.log('📝 User prompt:', prompt)
+    console.log('🔑 OpenAI API Key exists:', !!process.env.OPENAI_API_KEY)
+    
     const gptResponse = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemMessage },
         { role: 'user', content: prompt }
-      ]
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
     })
 
     const reply = gptResponse.choices[0].message.content
+    console.log('✅ OpenAI response received, length:', reply.length)
     let message = ''
     let filters = { location: '', bedrooms: '', budget: '' }
     let suggestedProperties = []
@@ -162,10 +209,35 @@ IMPORTANT: When users say they don't like a property or express concerns, be pos
       }
     }
     
+    console.log('📤 Sending response to client')
+    console.log('📤 Response data:', { 
+      messageLength: message.length, 
+      hasFilters: !!Object.keys(filters).length,
+      suggestedPropertiesCount: suggestedProperties.length 
+    })
+    
     res.json({ message, filters, suggestedProperties })
   } catch (err) {
-    console.error('OpenAI error:', err.message)
-    res.status(500).json({ error: 'Failed to process prompt' })
+    console.error('❌ OpenAI error:', err.message)
+    console.error('❌ Error stack:', err.stack)
+    console.error('❌ Error details:', err)
+    
+    // Check if it's a rate limit error
+    if (err.message.includes('429') || err.message.includes('Rate limit')) {
+      console.log('🔄 Rate limit detected, sending fallback response')
+      res.json({ 
+        message: 'I\'m currently experiencing high traffic. Please try again in a few minutes.',
+        filters: {},
+        suggestedProperties: []
+      })
+    } else {
+      console.log('💥 Unknown error, sending 500 response')
+      res.status(500).json({ 
+        error: 'Failed to process prompt',
+        details: err.message,
+        stack: err.stack
+      })
+    }
   }
 })
 
@@ -190,7 +262,15 @@ router.post('/compare-summary', async (req, res) => {
     res.json({ markdown })
   } catch (err) {
     console.error('OpenAI error:', err.message)
-    res.status(500).json({ error: 'Failed to generate comparison summary' })
+    
+    // Check if it's a rate limit error
+    if (err.message.includes('429') || err.message.includes('Rate limit')) {
+      res.json({ 
+        markdown: 'I\'m currently experiencing high traffic. Please try again in a few minutes to get a property comparison.'
+      })
+    } else {
+      res.status(500).json({ error: 'Failed to generate comparison summary' })
+    }
   }
 })
 
@@ -214,7 +294,15 @@ router.post('/property-description', async (req, res) => {
     res.json({ description })
   } catch (err) {
     console.error('OpenAI error:', err.message)
-    res.status(500).json({ error: 'Failed to generate property description' })
+    
+    // Check if it's a rate limit error
+    if (err.message.includes('429') || err.message.includes('Rate limit')) {
+      res.json({ 
+        description: 'This beautiful property offers modern amenities and comfortable living spaces. Located in a desirable neighborhood, it features updated finishes and plenty of natural light throughout. The property is perfect for families and investors alike.'
+      })
+    } else {
+      res.status(500).json({ error: 'Failed to generate property description' })
+    }
   }
 })
 
@@ -250,7 +338,16 @@ router.post('/generate-and-save-description', async (req, res) => {
     }
   } catch (err) {
     console.error('OpenAI error:', err.message)
-    res.status(500).json({ error: 'Failed to generate property description' })
+    
+    // Check if it's a rate limit error
+    if (err.message.includes('429') || err.message.includes('Rate limit')) {
+      res.json({ 
+        description: 'This beautiful property offers modern amenities and comfortable living spaces. Located in a desirable neighborhood, it features updated finishes and plenty of natural light throughout. The property is perfect for families and investors alike.',
+        saved: false
+      })
+    } else {
+      res.status(500).json({ error: 'Failed to generate property description' })
+    }
   }
 })
 
