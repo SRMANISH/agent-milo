@@ -282,30 +282,31 @@ const FindProperty = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-light text-slate-800 mb-4 tracking-wide">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-light text-slate-800 mb-4 tracking-wide">
             Discover Your Dream Home
           </h1>
-          <p className="text-xl text-slate-600 font-light max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-slate-600 font-light max-w-2xl mx-auto px-4">
             Explore our curated collection of exceptional properties, tailored to your lifestyle and aspirations.
           </p>
         </div>
 
-        <div className="flex">
-          {/* Fixed Left Sidebar - Chatbot */}
-          <div className="w-1/3 pr-8" ref={chatContainerRef}>
-            <div className="sticky top-0 bg-slate-800 rounded-2xl shadow-2xl border border-slate-600 overflow-hidden">
-              <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6">
-                <h2 className="text-2xl font-light text-white mb-2">Property Assistant</h2>
+        {/* Mobile: Stacked Layout, Desktop: Side-by-side */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Chatbot - Full width on mobile, 1/3 on desktop */}
+          <div className="w-full lg:w-1/3 lg:pr-8" ref={chatContainerRef}>
+            <div className="lg:sticky lg:top-0 bg-slate-800 rounded-2xl shadow-2xl border border-slate-600 overflow-hidden">
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 sm:p-6">
+                <h2 className="text-xl sm:text-2xl font-light text-white mb-2">Property Assistant</h2>
                 <p className="text-slate-300 text-sm">Let me help you find the perfect property</p>
               </div>
               
-              <div className="h-[500px] flex flex-col">
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="h-[400px] sm:h-[500px] flex flex-col">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
                   {messages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-xs px-4 py-3 rounded-2xl ${
+                      <div className={`max-w-[85%] sm:max-w-xs px-3 sm:px-4 py-2 sm:py-3 rounded-2xl ${
                         msg.from === 'user' 
                           ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
                           : 'bg-slate-700 text-slate-200 shadow-sm'
@@ -316,7 +317,7 @@ const FindProperty = () => {
                   ))}
                   {loading && (
                     <div className="flex justify-start">
-                      <div className="bg-slate-700 text-slate-200 px-4 py-3 rounded-2xl shadow-sm">
+                      <div className="bg-slate-700 text-slate-200 px-3 sm:px-4 py-2 sm:py-3 rounded-2xl shadow-sm">
                         <div className="flex space-x-1">
                           <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
                           <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -328,10 +329,10 @@ const FindProperty = () => {
                   <div ref={messagesEndRef} />
                 </div>
                 
-                <div className="border-t border-slate-600 p-4 bg-slate-700">
-                  <div className="flex gap-3">
+                <div className="border-t border-slate-600 p-3 sm:p-4 bg-slate-700">
+                  <div className="flex gap-2 sm:gap-3">
                     <input
-                      className="flex-1 px-4 py-3 border border-slate-500 bg-slate-600 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
+                      className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-slate-500 bg-slate-600 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400 text-sm"
                       placeholder="Describe your dream property..."
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
@@ -339,21 +340,21 @@ const FindProperty = () => {
                     />
                     <button 
                       onClick={handleUserInput} 
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                      className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                     >
-                      <Send size={20} />
+                      <Send size={18} className="sm:w-5 sm:h-5" />
                     </button>
                   </div>
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex gap-2 mt-3 flex-wrap">
                     <button 
                       onClick={resetChat} 
-                      className="px-4 py-2 text-slate-300 hover:text-white transition-colors duration-200 text-sm"
+                      className="px-3 sm:px-4 py-2 text-slate-300 hover:text-white transition-colors duration-200 text-xs sm:text-sm"
                     >
-                      <RefreshCcw size={16} className="inline mr-1" />
+                      <RefreshCcw size={14} className="inline mr-1" />
                       Reset
                     </button>
                     <button
-                      className="px-4 py-2 text-slate-300 hover:text-white transition-colors duration-200 text-sm"
+                      className="px-3 sm:px-4 py-2 text-slate-300 hover:text-white transition-colors duration-200 text-xs sm:text-sm"
                       onClick={async () => {
                         setLoading(true)
                         const all = await getAllResults()
@@ -376,59 +377,59 @@ const FindProperty = () => {
             </div>
           </div>
 
-          {/* Scrollable Right Content */}
-          <div className="w-2/3">
+          {/* Content - Full width on mobile, 2/3 on desktop */}
+          <div className="w-full lg:w-2/3">
             {/* Welcome Section */}
             {showWelcome && (
               <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-600 overflow-hidden welcome-transition fade-in">
-                <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-8">
-                  <h2 className="text-3xl font-light text-white mb-4">Welcome to Your Property Journey</h2>
-                  <p className="text-slate-300 text-lg mb-6">Discover exceptional homes that match your lifestyle and dreams.</p>
+                <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-6 sm:p-8">
+                  <h2 className="text-2xl sm:text-3xl font-light text-white mb-4">Welcome to Your Property Journey</h2>
+                  <p className="text-slate-300 text-base sm:text-lg mb-6">Discover exceptional homes that match your lifestyle and dreams.</p>
                 </div>
                 
-                <div className="p-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                    <div className="space-y-6">
-                      <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-6 rounded-xl">
-                        <h3 className="text-xl font-semibold text-white mb-3">Featured Properties</h3>
-                        <ul className="space-y-2 text-slate-300">
+                <div className="p-4 sm:p-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-center">
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-4 sm:p-6 rounded-xl">
+                        <h3 className="text-lg sm:text-xl font-semibold text-white mb-3">Featured Properties</h3>
+                        <ul className="space-y-2 text-slate-300 text-sm sm:text-base">
                           <li className="flex items-center">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                            Luxury waterfront estates
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
+                            <span>Luxury waterfront estates</span>
                           </li>
                           <li className="flex items-center">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                            Modern city apartments
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
+                            <span>Modern city apartments</span>
                           </li>
                           <li className="flex items-center">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                            Family-friendly suburbs
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
+                            <span>Family-friendly suburbs</span>
                           </li>
                           <li className="flex items-center">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                            Investment opportunities
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 flex-shrink-0"></div>
+                            <span>Investment opportunities</span>
                           </li>
                         </ul>
                       </div>
                       
-                      <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-6 rounded-xl">
-                        <h3 className="text-xl font-semibold text-white mb-3">Search Tips</h3>
-                        <ul className="space-y-2 text-slate-300">
+                      <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-4 sm:p-6 rounded-xl">
+                        <h3 className="text-lg sm:text-xl font-semibold text-white mb-3">Search Tips</h3>
+                        <ul className="space-y-2 text-slate-300 text-sm sm:text-base">
                           <li className="flex items-start">
                             <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0 mt-2"></div>
                             <span>Find Properties in New York With Three bedrooms for a price less than 500,000 dollars</span>
                           </li>
                           <li className="flex items-center">
-                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                            Beach front properties
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+                            <span>Beach front properties</span>
                           </li>
                           <li className="flex items-center">
-                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                            Show Me Properties From the East
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+                            <span>Show Me Properties From the East</span>
                           </li>
                           <li className="flex items-center">
-                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                            View All Properties
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
+                            <span>View All Properties</span>
                           </li>
                         </ul>
                       </div>
@@ -455,18 +456,18 @@ const FindProperty = () => {
 
             {/* Properties Results */}
             {Object.keys(categorizedResults).length > 0 && (
-              <div className="space-y-8 welcome-transition fade-in">
+              <div className="space-y-6 sm:space-y-8 welcome-transition fade-in">
                 {Object.entries(categorizedResults).map(([label, list]) => (
                   <div key={label} className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                    <div className="bg-gradient-to-r from-slate-50 to-slate-100 px-8 py-6 border-b border-slate-200">
-                      <h2 className="text-2xl font-light text-slate-800">
+                    <div className="bg-gradient-to-r from-slate-50 to-slate-100 px-4 sm:px-8 py-4 sm:py-6 border-b border-slate-200">
+                      <h2 className="text-xl sm:text-2xl font-light text-slate-800">
                         {label === 'all' ? 'Complete Collection' : label}
                       </h2>
-                      <p className="text-slate-600 mt-1">{list.length} exceptional properties</p>
+                      <p className="text-slate-600 mt-1 text-sm sm:text-base">{list.length} exceptional properties</p>
                     </div>
                     
-                    <div className="p-8">
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <div className="p-4 sm:p-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-8">
                         {list.map(p => (
                           <div 
                             key={p.id} 
@@ -477,55 +478,55 @@ const FindProperty = () => {
                               <img 
                                 src={p.image_url} 
                                 alt={p.title} 
-                                className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500" 
+                                className="w-full h-48 sm:h-64 object-cover group-hover:scale-110 transition-transform duration-500" 
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                              <div className="absolute top-4 right-4">
-                                <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                                  <span className="text-slate-800 font-semibold">${p.price.toLocaleString()}</span>
+                              <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
+                                <div className="bg-white/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full">
+                                  <span className="text-slate-800 font-semibold text-sm sm:text-base">${p.price.toLocaleString()}</span>
                                 </div>
                               </div>
                             </div>
                             
-                            <div className="p-6">
-                              <h3 className="text-xl font-light text-slate-800 mb-2 group-hover:text-blue-600 transition-colors duration-200">
+                            <div className="p-4 sm:p-6">
+                              <h3 className="text-lg sm:text-xl font-light text-slate-800 mb-2 group-hover:text-blue-600 transition-colors duration-200">
                                 {p.title}
                               </h3>
-                              <div className="flex items-center text-slate-600 mb-4">
-                                <MapPin size={16} className="mr-1" />
-                                <span className="text-sm">{p.location}</span>
+                              <div className="flex items-center text-slate-600 mb-3 sm:mb-4">
+                                <MapPin size={14} className="mr-1" />
+                                <span className="text-xs sm:text-sm">{p.location}</span>
                               </div>
                               
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center space-x-4 text-slate-600">
+                              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                                <div className="flex items-center space-x-3 sm:space-x-4 text-slate-600">
                                   <div className="flex items-center">
-                                    <Home size={16} className="mr-1" />
-                                    <span className="text-sm">{p.bedrooms} BR</span>
+                                    <Home size={14} className="mr-1" />
+                                    <span className="text-xs sm:text-sm">{p.bedrooms} BR</span>
                                   </div>
                                   <div className="flex items-center">
-                                    <Bath size={16} className="mr-1" />
-                                    <span className="text-sm">{p.bathrooms} BA</span>
+                                    <Bath size={14} className="mr-1" />
+                                    <span className="text-xs sm:text-sm">{p.bathrooms} BA</span>
                                   </div>
                                   <div className="flex items-center">
-                                    <Square size={16} className="mr-1" />
-                                    <span className="text-sm">{p.size_sqft} sqft</span>
+                                    <Square size={14} className="mr-1" />
+                                    <span className="text-xs sm:text-sm">{p.size_sqft} sqft</span>
                                   </div>
                                 </div>
                               </div>
                               
-                              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                              <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-slate-100">
                                 <div className="flex items-center">
                                   <input 
                                     type="checkbox" 
-                                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" 
+                                    className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" 
                                     checked={compare.some(c => c.id === p.id)} 
                                     onClick={e => e.stopPropagation()} 
                                     onChange={() => handleCompareToggle(p)} 
                                   />
-                                  <span className="ml-2 text-sm text-slate-600">Compare</span>
+                                  <span className="ml-2 text-xs sm:text-sm text-slate-600">Compare</span>
                                 </div>
                                 <button
-                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
                                     saving === p.id 
                                       ? 'bg-green-500 text-white animate-pulse' 
                                       : globalState.isPropertySaved(p.id)
@@ -534,7 +535,7 @@ const FindProperty = () => {
                                   }`}
                                   onClick={e => { e.stopPropagation(); handleSave(p); }}
                                 >
-                                  <Star size={14} className="inline mr-1" />
+                                  <Star size={12} className="inline mr-1" />
                                   {saving === p.id ? 'Saved' : globalState.isPropertySaved(p.id) ? 'Saved' : 'Save'}
                                 </button>
                               </div>
@@ -552,9 +553,9 @@ const FindProperty = () => {
       </div>
 
       {compare.length >= 2 && (
-        <div className="fixed bottom-8 right-8 z-50">
+        <div className="fixed bottom-4 sm:bottom-8 right-4 sm:right-8 z-50">
           <button 
-            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
             onClick={() => setShowModal(true)}
           >
             Compare {compare.length} Properties
@@ -565,38 +566,38 @@ const FindProperty = () => {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-6 flex justify-between items-center">
-              <h2 className="text-2xl font-light text-white">Property Comparison</h2>
+            <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-4 sm:p-6 flex justify-between items-center">
+              <h2 className="text-xl sm:text-2xl font-light text-white">Property Comparison</h2>
               <button 
                 className="text-white hover:text-slate-300 transition-colors duration-200" 
                 onClick={() => setShowModal(false)}
               >
-                <X size={24} />
+                <X size={20} className="sm:w-6 sm:h-6" />
               </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {compare.map(p => (
                   <div key={p.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-lg">
                     <div className="relative">
                       <img 
                         src={p.image_url} 
                         alt={p.title} 
-                        className="w-full h-48 object-cover" 
+                        className="w-full h-40 sm:h-48 object-cover" 
                       />
-                      <div className="absolute top-3 right-3">
-                        <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                          <span className="text-slate-800 font-semibold">${p.price.toLocaleString()}</span>
+                      <div className="absolute top-2 sm:top-3 right-2 sm:right-3">
+                        <div className="bg-white/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full">
+                          <span className="text-slate-800 font-semibold text-sm sm:text-base">${p.price.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="p-6">
-                      <h3 className="text-lg font-light text-slate-800 mb-2">{p.title}</h3>
-                      <div className="flex items-center text-slate-600 mb-3">
-                        <MapPin size={14} className="mr-1" />
-                        <span className="text-sm">{p.location}</span>
+                    <div className="p-4 sm:p-6">
+                      <h3 className="text-base sm:text-lg font-light text-slate-800 mb-2">{p.title}</h3>
+                      <div className="flex items-center text-slate-600 mb-2 sm:mb-3">
+                        <MapPin size={12} className="mr-1" />
+                        <span className="text-xs sm:text-sm">{p.location}</span>
                       </div>
-                      <div className="flex items-center space-x-4 text-slate-600 text-sm">
+                      <div className="flex items-center space-x-3 sm:space-x-4 text-slate-600 text-xs sm:text-sm">
                         <span>{p.bedrooms} BR</span>
                         <span>{p.bathrooms} BA</span>
                         <span>{p.size_sqft} sqft</span>
