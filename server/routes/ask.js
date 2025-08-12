@@ -16,6 +16,34 @@ router.get('/test', (req, res) => {
   })
 })
 
+// Token usage monitoring endpoint
+let tokenUsageStats = {
+  totalRequests: 0,
+  totalTokens: 0,
+  totalCost: 0,
+  requestsByEndpoint: {},
+  lastReset: new Date().toISOString()
+};
+
+router.get('/token-usage', (req, res) => {
+  res.json({
+    ...tokenUsageStats,
+    averageTokensPerRequest: tokenUsageStats.totalRequests > 0 ? Math.round(tokenUsageStats.totalTokens / tokenUsageStats.totalRequests) : 0,
+    averageCostPerRequest: tokenUsageStats.totalRequests > 0 ? (tokenUsageStats.totalCost / tokenUsageStats.totalRequests).toFixed(4) : 0
+  });
+});
+
+router.post('/reset-token-usage', (req, res) => {
+  tokenUsageStats = {
+    totalRequests: 0,
+    totalTokens: 0,
+    totalCost: 0,
+    requestsByEndpoint: {},
+    lastReset: new Date().toISOString()
+  };
+  res.json({ message: 'Token usage stats reset successfully' });
+});
+
 router.post('/', async (req, res) => {
   console.log('🚀 /api/ask endpoint called')
   console.log('📝 Request body:', { 
@@ -40,10 +68,20 @@ router.post('/', async (req, res) => {
       images: images.length 
     })
     
+    // OPTIMIZATION: Only include essential fields to reduce token usage
     allProperties = basics.map(base => {
       const char = characteristics.find(c => c.id === base.id) || {}
       const img = images.find(i => i.id === base.id) || {}
-      return { ...base, ...char, image_url: img.image_url || "" }
+      return {
+        id: base.id,
+        title: base.title,
+        price: base.price,
+        location: base.location,
+        bedrooms: char.bedrooms || base.bedrooms,
+        bathrooms: char.bathrooms || base.bathrooms,
+        size_sqft: char.size_sqft || base.size_sqft,
+        image_url: img.image_url || ""
+      }
     });
     
     console.log('✅ All properties merged:', allProperties.length)
@@ -53,26 +91,47 @@ router.post('/', async (req, res) => {
     allProperties = []
   }
 
-  // Format chat history for context
+  // OPTIMIZATION: Reduce chat history length to save tokens
   let historyText = '';
   if (Array.isArray(history) && history.length > 0) {
-    const lastHistory = history.slice(-10);
+    const lastHistory = history.slice(-5); // Reduced from -10 to -5
     historyText = lastHistory.map(m => `${m.from === 'user' ? 'User' : 'Bot'}: ${m.text}`).join('\n');
   }
 
-  // Create system message based on context
-  let systemMessage = `You are a helpful real estate assistant. Here is a list of all available properties: ${JSON.stringify(allProperties)}.\nHere is the recent chat history:\n${historyText}`;
+  // OPTIMIZATION: Intelligent property filtering based on user query
+  const promptLower = prompt.toLowerCase();
+  let relevantProperties = allProperties;
   
-  // Check if system message is too long (OpenAI has limits)
+  // Extract location keywords from user query
+  const locationKeywords = ['seattle', 'new york', 'miami', 'chicago', 'dallas', 'los angeles', 'boston', 'philadelphia', 'atlanta', 'denver', 'phoenix', 'san francisco', 'austin', 'nashville', 'portland', 'orlando', 'las vegas', 'san diego', 'tampa', 'minneapolis', 'detroit', 'cleveland', 'pittsburgh', 'cincinnati', 'indianapolis', 'columbus', 'milwaukee', 'kansas city', 'st louis', 'baltimore', 'washington', 'richmond', 'charlotte', 'raleigh', 'jacksonville', 'memphis', 'louisville', 'oklahoma city', 'tulsa', 'omaha', 'des moines', 'springfield', 'albany', 'buffalo', 'rochester', 'syracuse', 'utica', 'binghamton', 'kingston', 'poughkeepsie', 'newburgh', 'middletown'];
+  
+  const mentionedLocation = locationKeywords.find(loc => promptLower.includes(loc));
+  if (mentionedLocation) {
+    relevantProperties = allProperties.filter(p => 
+      p.location && p.location.toLowerCase().includes(mentionedLocation)
+    );
+    console.log(`🎯 Filtered to ${relevantProperties.length} properties in ${mentionedLocation}`);
+  }
+
+  // OPTIMIZATION: Limit properties sent to AI based on context
+  const maxPropertiesToSend = propertyContext ? 10 : 20; // Fewer properties when in property context
+  if (relevantProperties.length > maxPropertiesToSend) {
+    relevantProperties = relevantProperties.slice(0, maxPropertiesToSend);
+    console.log(`📊 Limited to ${maxPropertiesToSend} most relevant properties`);
+  }
+
+  // Create system message based on context
+  let systemMessage = `You are a helpful real estate assistant. Here is a list of relevant properties: ${JSON.stringify(relevantProperties)}.\nHere is the recent chat history:\n${historyText}`;
+  
+  // OPTIMIZATION: Reduce system message length limit
   const systemMessageLength = systemMessage.length;
   console.log('📏 System message length:', systemMessageLength);
   
-  if (systemMessageLength > 32000) {
+  if (systemMessageLength > 15000) { // Reduced from 32000 to 15000
     console.log('⚠️ System message too long, truncating...');
-    // Truncate the properties list to keep it under limits
-    const maxProperties = Math.floor(32000 / JSON.stringify(allProperties[0]).length);
-    const truncatedProperties = allProperties.slice(0, maxProperties);
-    systemMessage = `You are a helpful real estate assistant. Here is a list of available properties (showing ${truncatedProperties.length} of ${allProperties.length}): ${JSON.stringify(truncatedProperties)}.\nHere is the recent chat history:\n${historyText}`;
+    const maxProperties = Math.floor(15000 / JSON.stringify(relevantProperties[0] || {}).length);
+    const truncatedProperties = relevantProperties.slice(0, maxProperties);
+    systemMessage = `You are a helpful real estate assistant. Here is a list of relevant properties (showing ${truncatedProperties.length} of ${relevantProperties.length}): ${JSON.stringify(truncatedProperties)}.\nHere is the recent chat history:\n${historyText}`;
     console.log('📏 Truncated system message length:', systemMessage.length);
   }
   
@@ -96,11 +155,10 @@ IMPORTANT: When users say they don't like a property or express concerns, be pos
   }
 
   // Check if user is asking about other properties or expressing dislike
-  const propertyKeywords = ['other property', 'different property', 'another property', 'similar property', 'more properties', 'show me properties', 'find properties', 'search properties', 'browse properties', 'view properties', 'show me alternatives', 'other options', 'show other properties', 'show properties', 'properties from', 'new york properties', 'show', 'properties', 'property', 'seattle', 'new york', 'miami', 'chicago', 'dallas', 'los angeles', 'boston', 'philadelphia', 'atlanta', 'denver', 'phoenix', 'san francisco', 'austin', 'nashville', 'portland', 'orlando', 'las vegas', 'san diego', 'tampa', 'minneapolis', 'detroit', 'cleveland', 'pittsburgh', 'cincinnati', 'indianapolis', 'columbus', 'milwaukee', 'kansas city', 'st louis', 'baltimore', 'washington', 'richmond', 'charlotte', 'raleigh', 'jacksonville', 'memphis', 'louisville', 'oklahoma city', 'tulsa', 'omaha', 'des moines', 'springfield', 'albany', 'buffalo', 'rochester', 'syracuse', 'utica', 'binghamton', 'kingston', 'poughkeepsie', 'newburgh', 'middletown', 'poughkeepsie', 'newburgh', 'middletown'];
+  const propertyKeywords = ['other property', 'different property', 'another property', 'similar property', 'more properties', 'show me properties', 'find properties', 'search properties', 'browse properties', 'view properties', 'show me alternatives', 'other options', 'show other properties', 'show properties', 'properties from', 'new york properties', 'show', 'properties', 'property', 'seattle', 'new york', 'miami', 'chicago', 'dallas', 'los angeles', 'boston', 'philadelphia', 'atlanta', 'denver', 'phoenix', 'san francisco', 'austin', 'nashville', 'portland', 'orlando', 'las vegas', 'san diego', 'tampa', 'minneapolis', 'detroit', 'cleveland', 'pittsburgh', 'cincinnati', 'indianapolis', 'columbus', 'milwaukee', 'kansas city', 'st louis', 'baltimore', 'washington', 'richmond', 'charlotte', 'raleigh', 'jacksonville', 'memphis', 'louisville', 'oklahoma city', 'tulsa', 'omaha', 'des moines', 'springfield', 'albany', 'buffalo', 'rochester', 'syracuse', 'utica', 'binghamton', 'kingston', 'poughkeepsie', 'newburgh', 'middletown'];
   const dislikeKeywords = ['don\'t like', 'not interested', 'not what i want', 'prefer something else', 'hate', 'dislike', 'not for me'];
   
   // More flexible property detection
-  const promptLower = prompt.toLowerCase();
   const isAskingForProperties = propertyKeywords.some(keyword => promptLower.includes(keyword)) || 
                                 promptLower.includes('show') && (promptLower.includes('property') || promptLower.includes('properties') || 
                                 /(seattle|new york|miami|chicago|dallas|los angeles|boston|philadelphia|atlanta|denver|phoenix|san francisco|austin|nashville|portland|orlando|las vegas|san diego|tampa|minneapolis|detroit|cleveland|pittsburgh|cincinnati|indianapolis|columbus|milwaukee|kansas city|st louis|baltimore|washington|richmond|charlotte|raleigh|jacksonville|memphis|louisville|oklahoma city|tulsa|omaha|des moines|springfield|albany|buffalo|rochester|syracuse|utica|binghamton|kingston|poughkeepsie|newburgh|middletown)/.test(promptLower));
@@ -112,17 +170,38 @@ IMPORTANT: When users say they don't like a property or express concerns, be pos
     console.log('📝 User prompt:', prompt)
     console.log('🔑 OpenAI API Key exists:', !!process.env.OPENAI_API_KEY)
     
+    // OPTIMIZATION: Reduce max_tokens for shorter, focused responses
     const gptResponse = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemMessage },
         { role: 'user', content: prompt }
       ],
-      max_tokens: 1000,
+      max_tokens: 500, // Reduced from 1000 to 500
       temperature: 0.7
     })
 
     const reply = gptResponse.choices[0].message.content
+    
+    // TOKEN USAGE TRACKING
+    const usage = gptResponse.usage;
+    const cost = (usage.prompt_tokens * 0.00015) + (usage.completion_tokens * 0.0006);
+    
+    // Update global token usage stats
+    tokenUsageStats.totalRequests++;
+    tokenUsageStats.totalTokens += usage.total_tokens;
+    tokenUsageStats.totalCost += cost;
+    tokenUsageStats.requestsByEndpoint['/api/ask'] = (tokenUsageStats.requestsByEndpoint['/api/ask'] || 0) + 1;
+    
+    console.log('💰 Token Usage:', {
+      prompt_tokens: usage.prompt_tokens,
+      completion_tokens: usage.completion_tokens,
+      total_tokens: usage.total_tokens,
+      estimated_cost: `$${cost.toFixed(4)}`,
+      total_requests: tokenUsageStats.totalRequests,
+      total_cost: `$${tokenUsageStats.totalCost.toFixed(4)}`
+    });
+    
     console.log('✅ OpenAI response received, length:', reply.length)
     let message = ''
     let filters = { location: '', bedrooms: '', budget: '' }
@@ -256,9 +335,31 @@ router.post('/compare-summary', async (req, res) => {
       messages: [
         { role: 'system', content: 'You are a helpful real estate assistant. Given a list of property details, provide a concise, friendly, and helpful summary comparing them for a home buyer. Ignore image URLs and unrelated metadata. Focus on actionable recommendations based on the user portfolio (budget, location, bedrooms, etc.). Always respond in markdown, and follow the user instructions for format.' },
         { role: 'user', content: prompt }
-      ]
+      ],
+      max_tokens: 300, // Optimized for comparison summaries
+      temperature: 0.7
     })
     const markdown = gptResponse.choices[0].message.content
+    
+    // TOKEN USAGE TRACKING
+    const usage = gptResponse.usage;
+    const cost = (usage.prompt_tokens * 0.000002) + (usage.completion_tokens * 0.000002);
+    
+    // Update global token usage stats
+    tokenUsageStats.totalRequests++;
+    tokenUsageStats.totalTokens += usage.total_tokens;
+    tokenUsageStats.totalCost += cost;
+    tokenUsageStats.requestsByEndpoint['/api/ask/compare-summary'] = (tokenUsageStats.requestsByEndpoint['/api/ask/compare-summary'] || 0) + 1;
+    
+    console.log('💰 Compare Summary Token Usage:', {
+      prompt_tokens: usage.prompt_tokens,
+      completion_tokens: usage.completion_tokens,
+      total_tokens: usage.total_tokens,
+      estimated_cost: `$${cost.toFixed(4)}`,
+      total_requests: tokenUsageStats.totalRequests,
+      total_cost: `$${tokenUsageStats.totalCost.toFixed(4)}`
+    });
+    
     res.json({ markdown })
   } catch (err) {
     console.error('OpenAI error:', err.message)
@@ -288,9 +389,31 @@ router.post('/property-description', async (req, res) => {
       messages: [
         { role: 'system', content: 'You are a helpful real estate assistant. Given a property, write a beautiful, engaging description that highlights its best features and appeals to potential buyers. Do not return JSON, just the description text.' },
         { role: 'user', content: prompt }
-      ]
+      ],
+      max_tokens: 250, // Optimized for property descriptions
+      temperature: 0.7
     })
     const description = gptResponse.choices[0].message.content
+    
+    // TOKEN USAGE TRACKING
+    const usage = gptResponse.usage;
+    const cost = (usage.prompt_tokens * 0.000002) + (usage.completion_tokens * 0.000002);
+    
+    // Update global token usage stats
+    tokenUsageStats.totalRequests++;
+    tokenUsageStats.totalTokens += usage.total_tokens;
+    tokenUsageStats.totalCost += cost;
+    tokenUsageStats.requestsByEndpoint['/api/ask/property-description'] = (tokenUsageStats.requestsByEndpoint['/api/ask/property-description'] || 0) + 1;
+    
+    console.log('💰 Property Description Token Usage:', {
+      prompt_tokens: usage.prompt_tokens,
+      completion_tokens: usage.completion_tokens,
+      total_tokens: usage.total_tokens,
+      estimated_cost: `$${cost.toFixed(4)}`,
+      total_requests: tokenUsageStats.totalRequests,
+      total_cost: `$${tokenUsageStats.totalCost.toFixed(4)}`
+    });
+    
     res.json({ description })
   } catch (err) {
     console.error('OpenAI error:', err.message)
@@ -322,10 +445,31 @@ router.post('/generate-and-save-description', async (req, res) => {
       messages: [
         { role: 'system', content: 'You are a helpful real estate assistant. Given a property, write a beautiful, engaging description that highlights its best features and appeals to potential buyers. Do not return JSON, just the description text.' },
         { role: 'user', content: prompt }
-      ]
+      ],
+      max_tokens: 250, // Optimized for property descriptions
+      temperature: 0.7
     })
     
     const description = gptResponse.choices[0].message.content
+    
+    // TOKEN USAGE TRACKING
+    const usage = gptResponse.usage;
+    const cost = (usage.prompt_tokens * 0.000002) + (usage.completion_tokens * 0.000002);
+    
+    // Update global token usage stats
+    tokenUsageStats.totalRequests++;
+    tokenUsageStats.totalTokens += usage.total_tokens;
+    tokenUsageStats.totalCost += cost;
+    tokenUsageStats.requestsByEndpoint['/api/ask/generate-and-save-description'] = (tokenUsageStats.requestsByEndpoint['/api/ask/generate-and-save-description'] || 0) + 1;
+    
+    console.log('💰 Generate & Save Description Token Usage:', {
+      prompt_tokens: usage.prompt_tokens,
+      completion_tokens: usage.completion_tokens,
+      total_tokens: usage.total_tokens,
+      estimated_cost: `$${cost.toFixed(4)}`,
+      total_requests: tokenUsageStats.totalRequests,
+      total_cost: `$${tokenUsageStats.totalCost.toFixed(4)}`
+    });
     
     // Save the description permanently
     const { savePropertyDescription } = require('../utils/mergeAndFilter')
