@@ -1,10 +1,10 @@
-**Agent Mira Real Estate App - README**
+**Agent Milo Real Estate App - README**
 
 ---
 
 ## Project Overview
 
-**Agent Mira** is a comprehensive full-stack AI-powered real estate platform designed to revolutionize the property search experience. Our platform combines intelligent chatbot interactions, advanced AI features, and machine learning to help users find, analyze, and make informed decisions about properties.
+**Agent Milo** is a comprehensive full-stack AI-powered real estate platform designed to revolutionize the property search experience. Our platform combines intelligent chatbot interactions, advanced AI features, and machine learning to help users find, analyze, and make informed decisions about properties.
 
 ### Built With:
 
@@ -268,4 +268,4 @@ agent-mira/
 
 ---
 
-**Agent Mira** represents the future of real estate technology, combining cutting-edge AI with intuitive design to create an unparalleled property search experience.
+**Agent Milo** represents the future of real estate technology, combining cutting-edge AI with intuitive design to create an unparalleled property search experience.
